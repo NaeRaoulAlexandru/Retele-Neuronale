@@ -23,7 +23,10 @@ project-name/
 ├── docs/
 │   └── datasets/          # descriere seturi de date, surse, diagrame
 ├── data/
-│   ├── raw/               # date brute
+│   ├── raw/               # am adaugat poze din diferite desene de executie cu informatii de pe desen
+|   |    ├── filete/
+|   |    ├── racordari/
+|   |    ├── tesituri/
 │   ├── processed/         # date curățate și transformate
 │   ├── train/             # set de instruire
 │   ├── validation/        # set de validare
@@ -42,24 +45,23 @@ project-name/
 
 ### 2.1 Sursa datelor
 
-* **Origine:** [Descriere sursă date - ex: senzori robot, dataset public, simulare]
-* **Modul de achiziție:** ☐ Senzori reali / ☐ Simulare / ☐ Fișier extern / ☐ Generare programatică
-* **Perioada / condițiile colectării:** [Ex: Noiembrie 2024 - Ianuarie 2025, condiții experimentale specifice]
+* **Origine:** [Dataset public de desene tehnice pentru diferite piese mecanice]
+* **Modul de achiziție:** Fisiere externe si generare programabila pentru inclinarea capturilor la anumite grade
+* **Perioada / condițiile colectării:** [Noiembrie 2025 - Decembrie 2025]
 
 ### 2.2 Caracteristicile dataset-ului
 
-* **Număr total de observații:** [Ex: 15,000]
-* **Număr de caracteristici (features):** [Ex: 12]
-* **Tipuri de date:** ☐ Numerice / ☐ Categoriale / ☐ Temporale / ☐ Imagini
-* **Format fișiere:** ☐ CSV / ☐ TXT / ☐ JSON / ☐ PNG / ☐ Altele: [...]
+* **Număr total de observații:** 
+* **Număr de caracteristici (features):** 
+* **Tipuri de date:** Categoriale / Imagini
+* **Format fișiere:** PNG
 
 ### 2.3 Descrierea fiecărei caracteristici
 
 | **Caracteristică** | **Tip** | **Unitate** | **Descriere** | **Domeniu valori** |
 |-------------------|---------|-------------|---------------|--------------------|
-| feature_1 | numeric | mm | [...] | 0–150 |
-| feature_2 | categorial | – | [...] | {A, B, C} |
-| feature_3 | numeric | m/s | [...] | 0–2.5 |
+| pixeli | numeric | intensitate | valorile pixelilor | 0-255 |
+| cota | categorial | – | cotele sunt de diferite tipuri (1-gauri, 2-filete, 3-racordari, 4-tesituri, 5-lungimi, 6-diametre) | 1-6 |
 | ... | ... | ... | ... | ... |
 
 **Fișier recomandat:**  `data/README.md`
@@ -138,9 +140,9 @@ project-name/
 ##  6. Stare Etapă (de completat de student)
 
 - [X] Structură repository configurată
-- [ ] Dataset analizat (EDA realizată)
+- [X] Dataset analizat (EDA realizată)
 - [ ] Date preprocesate
 - [ ] Seturi train/val/test generate
-- [ ] Documentație actualizată în README + `data/README.md`
+- [X] Documentație actualizată în README + `data/README.md`
 
 ---

@@ -1,6 +1,6 @@
 # 📘 README – Etapa 3: Analiza și Pregătirea Setului de Date pentru Rețele Neuronale
 
-Proiectul are ca scop masurarea obiectelor si clasificarea acestora dupa conformitate.
+Proiectul are ca scop recomandarea proceselor de prelucrare in functie de dimensiunile desenului si standardele impuse.
 
 **Disciplina:** Rețele Neuronale  
 **Instituție:** POLITEHNICA București – FIIR  

@@ -110,9 +110,9 @@ project-name/
 ### 4.3 Structurarea seturilor de date
 
 **Împărțire recomandată:**
-* 70–80% – train
-* 10–15% – validation
-* 10–15% – test
+* 80% – train
+* 10% – validation
+* 10% – test
 
 **Principii respectate:**
 * Stratificare pentru clasificare
@@ -141,8 +141,8 @@ project-name/
 
 - [X] Structură repository configurată
 - [X] Dataset analizat (EDA realizată)
-- [ ] Date preprocesate
-- [ ] Seturi train/val/test generate
+- [X] Date preprocesate
+- [X] Seturi train/val/test generate
 - [X] Documentație actualizată în README + `data/README.md`
 
 ---

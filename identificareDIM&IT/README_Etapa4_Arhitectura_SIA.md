@@ -75,7 +75,6 @@ Acestea au fost exportate in format YoloV8 unde fiecare fisier (train/valid/test
 - Grafic comparativ: `docs/generated_vs_real.png`
 - Setup experimental: `docs/acquisition_setup.jpg` (dacă aplicabil)
 - Tabel statistici: `docs/data_statistics.csv`
-```
 ---
 
 ### 3. Legenda State Machine

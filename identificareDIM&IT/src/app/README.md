@@ -6,4 +6,4 @@ Pentru a rula aplicația, ai nevoie de:
 - Bibliotecile listate în `requirements.txt`.
 
 ## Run
-- foloseste "streamlib run app.py" in terminal
+- foloseste "streamlit run app.py" in terminal

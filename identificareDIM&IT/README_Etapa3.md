@@ -80,7 +80,6 @@ project-name/
 * **Medie, mediană, deviație standard**
 * **Min–max și quartile**
 * **Distribuții pe caracteristici** (histograme)
-  
 * **Identificarea outlierilor** (IQR / percentile)
 
 ### 3.2 Analiza calității datelor
@@ -90,9 +89,8 @@ project-name/
 * **Identificarea caracteristicilor redundante sau puternic corelate**
 
 ### 3.3 Probleme identificate
-* Dezechilibru de clasă: Clasa filet are un număr critic de mic de exemple (< 5% din total instanțe), rezultând inițial într-un Recall de 0%.
-* Rezoluție insuficientă: La rezoluția standard de $640 \times 640$, detaliile fine ale hașurilor de filet se pierdeau, fiind confundate cu fundalul.
-* Split incorect inițial: Roboflow a generat un split disproporționat (133 Train vs 4 Valid), ceea ce a dus la instabilitate în antrenament.
+* Dezechilibru de clasă: Clasele filet si gauri au un număr foarte mic de exemple, rezultând inițial într-un Recall de 0%.
+* Split incorect inițial: Roboflow a generat un split disproporționat (132 Train vs 4 Valid vs 4 Test), ceea ce a dus la instabilitate în antrenament.
 
 ---
 

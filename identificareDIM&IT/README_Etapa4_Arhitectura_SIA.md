@@ -131,8 +131,8 @@ Toate cele 3 module trebuie să **pornească și să ruleze fără erori** la pr
 #### **Modul 3: Web Service / UI**
 
 **Funcționalități MINIME obligatorii:**
-- [ ] Propunere Interfață ce primește input de la user (formular, file upload, sau API endpoint)
-- [ ] Includeți un screenshot demonstrativ în `docs/screenshots/`
+- [X] Propunere Interfață ce primește input de la user (formular, file upload, sau API endpoint)
+- [X] Includeți un screenshot demonstrativ în `docs/screenshots/`
 
 **Ce NU e necesar în Etapa 4:**
 - UI frumos/profesionist cu grafică avansată
@@ -209,9 +209,9 @@ proiect-rn-[nume-prenume]/
 - [X] README în `src/neural_network/` cu detalii arhitectură curentă
 
 ### Modul 3: Web Service / UI
-- [ ] Propunere Interfață ce pornește fără erori (comanda de lansare testată)
-- [ ] Screenshot demonstrativ în `docs/screenshots/ui_demo.png`
-- [ ] README în `src/app/` cu instrucțiuni lansare (comenzi exacte)
+- [X] Propunere Interfață ce pornește fără erori (comanda de lansare testată)
+- [X] Screenshot demonstrativ în `docs/screenshots/ui_demo.png`
+- [X] README în `src/app/` cu instrucțiuni lansare (comenzi exacte)
 
 ---
 

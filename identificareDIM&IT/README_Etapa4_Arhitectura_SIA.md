@@ -38,78 +38,35 @@ Completați in acest readme tabelul următor cu **minimum 2-3 rânduri** care le
 
 | **Nevoie reală concretă** | **Cum o rezolvă SIA-ul vostru** | **Modul software responsabil** |
 |---------------------------|--------------------------------|--------------------------------|
-| Ex: Detectarea automată a fisurilor în suduri robotizate | Clasificare imagine radiografică → alertă operator în < 2 secunde | RN + Web Service |
-| Ex: Predicția uzurii lagărelor în turbine eoliene | Analiză vibrații în timp real → alertă preventivă cu 95% acuratețe | Data Logging + RN + UI |
-| Ex: Optimizarea traiectoriilor robotului mobil în depozit | Predicție timp traversare → reducere 20% consum energetic | RN + Control Module |
-| Recomandarea procedeelor tehnologice de prelucrare | Cla | |
-| [Completați cu proiectul vostru] | | |
-
-**Instrucțiuni:**
-- Fiți concreti (nu vagi): "detectare fisuri sudură" ✓, "îmbunătățire proces" ✗
-- Specificați metrici măsurabile: "< 2 secunde", "> 95% acuratețe", "reducere 20%"
-- Legați fiecare nevoie de modulele software pe care le dezvoltați
+| Validarea rapidă a documentației: Verificarea manuală a prezenței tuturor cotelor și toleranțelor pe un desen A3 durează ~5-10 minute.| Detectare automată și inventariere: Identificarea instantanee (< 2 secunde) a tuturor simbolurilor (Cote, Ra, Toleranțe) și afișarea lor într-o listă de verificare. | RN + UI |
+| Asistență decizională: Inginerii juniori pot alege greșit procedeul de prelucrare pentru o anumită rugozitate (ex: strunjire în loc de rectificare). | Logică de Recomandare: Algoritmul sugerează automat operația (ex: "Rectificare") bazat pe asocierea detectată {Cotă + Ra 0.8}. | UI |
+| Crearea bazei de date (Data Loop) Lipsa dataset-urilor publice cu simboluri ISO/STAS pentru antrenarea algoritmilor. | Data Logging Automat: Salvarea desenelor validate de utilizator și generarea sintetică (augmentare) a noi date pentru re-antrenare. | Data Acquisition + UI |
 
 ---
 
-### 2. Contribuția Voastră Originală la Setul de Date – MINIM 40% din Totalul Observațiilor Finale
-
-**Regula generală:** Din totalul de **N observații finale** în `data/processed/`, **minimum 40%** trebuie să fie **contribuția voastră originală**.
-
-#### Cum se calculează 40%:
-
-**Exemplu 1 - Dataset DOAR public în Etapa 3:**
-```
-Etapa 3: Ați folosit 10,000 samples dintr-o sursa externa (ex: Kaggle)
-Etapa 4: Trebuie să generați/achiziționați date astfel încât:
-  
-Opțiune A: Adăugați 6,666 samples noi → Total 16,666 (6,666/16,666 = 40%)
-Opțiune B: Păstrați 6,000 publice + 4,000 generate → Total 10,000 (4,000/10,000 = 40%)
-```
-
-**Exemplu 2 - Dataset parțial original în Etapa 3:**
-```
-Etapa 3: Ați avut deja 3,000 samples generate + 7,000 publice = 10,000 total
-Etapa 4: 3,000 samples existente numără ca "originale"
-        Dacă 3,000/10,000 = 30% < 40% → trebuie să generați încă ~1,700 samples
-        pentru a ajunge la 4,700/10,000 = 47% > 40% ✓
-```
-
-**Exemplu 3 - Dataset complet original:**
-```
-Etapa 3-4: Generați toate datele (simulare, senzori proprii, etichetare manuală - varianta recomandata)
-           → 100% original ✓ (depășește cu mult 40% - FOARTE BINE!)
-```
-
-#### Tipuri de contribuții acceptate (exemple din inginerie):
-
-Alegeți UNA sau MAI MULTE dintre variantele de mai jos și **demonstrați clar în repository**:
+#### Tipuri de contribuții acceptate
 
 | **Tip contribuție** | **Exemple concrete din inginerie** | **Dovada minimă cerută** |
 |---------------------|-------------------------------------|--------------------------|
-| **Date generate prin simulare fizică** | • Traiectorii robot în Gazebo<br>• Vibrații motor cu zgomot aleator calibrat<br>• Consumuri energetice proces industrial simulat | Cod Python/LabVIEW funcțional + grafice comparative (simulat vs real din literatură) + justificare parametri |
-| **Date achiziționate cu senzori proprii** | • 500-2000 măsurători accelerometru pe motor<br>• 100-1000 imagini capturate cu cameră montată pe robot<br>• 200-1000 semnale GPS/IMU de pe platformă mobilă<br>• Temperaturi/presiuni procesate din Arduino/ESP32 | Foto setup experimental + CSV-uri produse + descriere protocol achiziție (frecvență, durata, condiții) |
-| **Etichetare/adnotare manuală** | • Etichetat manual 1000+ imagini defecte sudură<br>• Anotat 500+ secvențe video cu comportamente robot<br>• Clasificat manual 2000+ semnale vibrații (normal/anomalie)<br>• Marcat manual 1500+ puncte de interes în planuri tehnice | Fișier Excel/JSON cu labels + capturi ecran tool etichetare + log timestamp-uri lucru |
-| **Date sintetice prin metode avansate** | • Simulări FEM/CFD pentru date dinamice proces | Cod implementare metodă + exemple before/after + justificare hiperparametri + validare pe subset real |
+| **Etichetare/adnotare manuală** | • Etichetat manual 950 de clase in RoboFLOW | Fișier Excel/JSON cu labels + capturi ecran tool etichetare + log timestamp-uri lucru |
 
-#### Declarație obligatorie în README:
-
-Scrieți clar în acest README (Secțiunea 2):
-
-```markdown
 ### Contribuția originală la setul de date:
 
-**Total observații finale:** [N] (după Etapa 3 + Etapa 4)
-**Observații originale:** [M] ([X]%)
+**Total observații finale:** 140 imagini
+**Observații originale:** 41 imagini (100%)
 
 **Tipul contribuției:**
-[X] Date generate prin simulare fizică  
-[ ] Date achiziționate cu senzori proprii  
-[X] Etichetare/adnotare manuală  
+[] Date generate prin simulare fizică  
+[X] Date achiziționate cu senzori proprii 
+[X] Etichetare/adnotare manuală (Roboflow) 
 [ ] Date sintetice prin metode avansate  
 
 **Descriere detaliată:**
-[Explicați în 2-3 paragrafe cum ați generat datele, ce metode ați folosit, 
-de ce sunt relevante pentru problema voastră, cu ce parametri ați rulat simularea/achiziția]
+Datele(desenele de executie) au fost luate dint-un document primit la un curs de procese industriale. Aici se regaseau ~140 de desene de executie. Am ales aleator 41 de poze. 
+
+Datele au fost importate pe platforma Roboflow, unde le-am parcurs pe toate si am etichetat fiecare informatie(rugozitate,cota,simboluri,etc). Apoi le-am preprocesat (Stretch to 640x640 px) si am folosit metodele de augmentare(Rotation:Between -2° and +2°; Brightness: Between -15% and +15%; Noise: Up to 1.25% of pixels). Astfel au rezultat 140 de poze.
+
+Acestea au fost exportate in format YoloV8 unde fiecare fisier (train/valid/test) au cate 2 fisiere: image si label. Fisierul image cuprinde toate pozele cu desene in format .jpg, iar cel label cuprinde file in format .txt ce au informatii despre fiecare "dreptunghi" plasat in acea imagine si ce clasa reprezinta acesta. 
 
 **Locația codului:** `src/data_acquisition/[numele_scriptului]`
 **Locația datelor:** `data/generated/` sau `data/raw/original/`
@@ -119,117 +76,28 @@ de ce sunt relevante pentru problema voastră, cu ce parametri ați rulat simula
 - Setup experimental: `docs/acquisition_setup.jpg` (dacă aplicabil)
 - Tabel statistici: `docs/data_statistics.csv`
 ```
-
-#### Exemple pentru "contribuție originală":
--Simulări fizice realiste cu ecuații și parametri justificați  
--Date reale achiziționate cu senzori proprii (setup documentat)  
--Augmentări avansate cu justificare fizică (ex: simulare perspective camera industrială)  
-
-
-#### Atenție - Ce NU este considerat "contribuție originală":
-
-- Augmentări simple (rotații, flips, crop) pe date publice  
-- Aplicare filtre standard (Gaussian blur, contrast) pe imagini publice  
-- Normalizare/standardizare (aceasta e preprocesare, nu generare)  
-- Subset dintr-un dataset public (ex: selectat 40% din ImageNet)
-
-
 ---
 
 ### 3. Diagrama State Machine a Întregului Sistem (OBLIGATORIE)
-
-**Cerințe:**
-- **Minimum 4-6 stări clare** cu tranziții între ele
-- **Formate acceptate:** PNG/SVG, pptx, draw.io 
-- **Locație:** `docs/state_machine.*` (orice extensie)
-- **Legendă obligatorie:** 1-2 paragrafe în acest README: "De ce ați ales acest State Machine pentru nevoia voastră?"
-
-**Stări tipice pentru un SIA:**
-```
-IDLE → ACQUIRE_DATA → PREPROCESS → INFERENCE → DISPLAY/ACT → LOG → [ERROR] → STOP
-                ↑______________________________________________|
-```
-
-**Exemple concrete per domeniu de inginerie:**
-
-#### A. Monitorizare continuă proces industrial (vibrații motor, temperaturi, presiuni):
-```
-IDLE → START_ACQUISITION → COLLECT_SENSOR_DATA → BUFFER_CHECK → 
-PREPROCESS (filtrare, FFT) → RN_INFERENCE → THRESHOLD_CHECK → 
-  ├─ [Normal] → LOG_RESULT → UPDATE_DASHBOARD → COLLECT_SENSOR_DATA (loop)
-  └─ [Anomalie] → TRIGGER_ALERT → NOTIFY_OPERATOR → LOG_INCIDENT → 
-                  COLLECT_SENSOR_DATA (loop)
-       ↓ [User stop / Emergency]
-     SAFE_SHUTDOWN → STOP
-```
-
-#### B. Clasificare imagini defecte producție (suduri, suprafețe, piese):
-```
-IDLE → WAIT_TRIGGER (senzor trecere piesă) → CAPTURE_IMAGE → 
-VALIDATE_IMAGE (blur check, brightness) → 
-  ├─ [Valid] → PREPROCESS (resize, normalize) → RN_INFERENCE → 
-              CLASSIFY_DEFECT → 
-                ├─ [OK] → LOG_OK → CONVEYOR_PASS → IDLE
-                └─ [DEFECT] → LOG_DEFECT → TRIGGER_REJECTION → IDLE
-  └─ [Invalid] → ERROR_IMAGE_QUALITY → RETRY_CAPTURE (max 3×) → IDLE
-       ↓ [Shift end]
-     GENERATE_REPORT → STOP
-```
-
-#### C. Predicție traiectorii robot mobil (AGV, AMR în depozit):
-```
-IDLE → LOAD_MAP → RECEIVE_TARGET → PLAN_PATH → 
-VALIDATE_PATH (obstacle check) →
-  ├─ [Clear] → EXECUTE_SEGMENT → ACQUIRE_SENSORS (LIDAR, IMU) → 
-              RN_PREDICT_NEXT_STATE → UPDATE_TRAJECTORY → 
-                ├─ [Target reached] → STOP_AT_TARGET → LOG_MISSION → IDLE
-                └─ [In progress] → EXECUTE_SEGMENT (loop)
-  └─ [Obstacle detected] → REPLAN_PATH → VALIDATE_PATH
-       ↓ [Emergency stop / Battery low]
-     SAFE_STOP → LOG_STATUS → STOP
-```
-
-#### D. Predicție consum energetic (turbine eoliene, procese batch):
-```
-IDLE → LOAD_HISTORICAL_DATA → ACQUIRE_CURRENT_CONDITIONS 
-(vânt, temperatură, demand) → PREPROCESS_FEATURES → 
-RN_FORECAST (24h ahead) → VALIDATE_FORECAST (sanity checks) →
-  ├─ [Valid] → DISPLAY_FORECAST → UPDATE_CONTROL_STRATEGY → 
-              LOG_PREDICTION → WAIT_INTERVAL (1h) → 
-              ACQUIRE_CURRENT_CONDITIONS (loop)
-  └─ [Invalid] → ERROR_FORECAST → USE_FALLBACK_MODEL → LOG_ERROR → 
-                ACQUIRE_CURRENT_CONDITIONS (loop)
-       ↓ [User request report]
-     GENERATE_DAILY_REPORT → STOP
-```
-
-**Notă pentru proiecte simple:**
-Chiar dacă aplicația voastră este o clasificare simplă (user upload → classify → display), trebuie să modelați fluxul ca un State Machine. Acest exercițiu vă învață să gândiți modular și să anticipați toate stările posibile (inclusiv erori).
-
-**Legendă obligatorie (scrieți în README):**
-```markdown
 ### Justificarea State Machine-ului ales:
 
-Am ales arhitectura [descrieți tipul: monitorizare continuă / clasificare la senzor / 
-predicție batch / control în timp real] pentru că proiectul nostru [explicați nevoia concretă 
-din tabelul Secțiunea 1].
+Am ales o arhitectura de tip "Human-in-the-loop CAPP" (Computer-Aided Process Planning asistat), pentru ca automatizarea totala a desenelor tehnice prezinta riscuri de eroare contextuala. Desi Reteaua Neuronala poate detecta cu precizie prezenta simbolurilor, ea nu poate deduce automat relatiile tehnologice dintre acestea (ex: ce rugozitate se aplica acestei cote?).
 
-Stările principale sunt:
-1. [STARE_1]: [ce se întâmplă aici - ex: "achiziție 1000 samples/sec de la accelerometru"]
-2. [STARE_2]: [ce se întâmplă aici - ex: "calcul FFT și extragere 50 features frecvență"]
-3. [STARE_3]: [ce se întâmplă aici - ex: "inferență RN cu latență < 50ms"]
-...
+### Stările principale sunt:
 
-Tranzițiile critice sunt:
-- [STARE_A] → [STARE_B]: [când se întâmplă - ex: "când buffer-ul atinge 1024 samples"]
-- [STARE_X] → [ERROR]: [condiții - ex: "când senzorul nu răspunde > 100ms"]
+1. **[IDLE]:** Sistemul este în repaus, interfața web (Modul 3) așteaptă încărcarea unui fișier de tip imagine (JPG/PNG).
+2. **[PREPROCESS]:** Imaginea încărcată este redimensionată la **640x640 px** (standard YOLO) pentru a optimiza viteza de inferență.
+3. **[AI_INFERENCE]:** Modelul YOLOv8 (Modul 2) rulează predicția pe imaginea procesată, generând o listă de obiecte cu coordonate și clase (Cote, Ra, Filete), cu o latență vizată de **< 2 secunde**.
+4. **[USER_GROUPING]:** Etapă interactivă (Human-in-the-loop) în care utilizatorul selectează vizual elementele asociate tehnologic (ex: grupează o "Cotă" cu o "Rugozitate" detectată), deoarece AI-ul nu poate deduce automat relațiile spațiale complexe.
+5. **[GENERATE_PLAN]:** Un algoritm bazat pe reguli (Rule-Based System) analizează grupul validat de utilizator și determină operația (ex: "Dacă Ra < 0.8 → Rectificare").
+6. **[LOG_AND_EXPORT]:** Generarea fișierului CSV final și salvarea automată a datelor validate în **Modulul 1** pentru re-antrenare viitoare.
 
-Starea ERROR este esențială pentru că [explicați ce erori pot apărea în contextul 
-aplicației voastre industriale - ex: "senzorul se poate deconecta în mediul industrial 
-cu vibrații și temperatură variabilă, trebuie să gestionăm reconnect automat"].
+### Tranzițiile critice sunt:
 
-Bucla de feedback [dacă există] funcționează astfel: [ex: "rezultatul inferenței 
-actualizează parametrii controlerului PID pentru reglarea vitezei motorului"].
+- **[IDLE] → [PREPROCESS]:** Se declanșează când utilizatorul încarcă un fișier valid, iar buffer-ul de upload confirmă recepția completă a datelor.
+- **[AI_INFERENCE] → [USER_GROUPING]:** Se întâmplă automat după finalizarea predicției, doar dacă **numărul de obiecte detectate > 0**.
+- **[AI_INFERENCE] → [ERROR/WARNING]:** Se întâmplă când modelul returnează 0 detecții (Confidence < Pragul stabilit), semnalând utilizatorului că imaginea poate fi neclară sau lipsită de simboluri cunoscute.
+- **[USER_GROUPING] → [GENERATE_PLAN]:** Se declanșează la apăsarea butonului "Generează Operație", validând că selecția conține cel puțin o entitate geometrică și o condiție tehnică.
 ```
 
 ---
@@ -257,10 +125,10 @@ Toate cele 3 module trebuie să **pornească și să ruleze fără erori** la pr
 #### **Modul 2: Neural Network Module**
 
 **Funcționalități obligatorii:**
-- [ ] Arhitectură RN definită și compilată fără erori
-- [ ] Model poate fi salvat și reîncărcat
-- [ ] Include justificare pentru arhitectura aleasă (în docstring sau README)
-- [ ] **NU trebuie antrenat** cu performanță bună (weights pot fi random)
+- [X] Arhitectură RN definită și compilată fără erori
+- [X] Model poate fi salvat și reîncărcat
+- [X] Include justificare pentru arhitectura aleasă (în docstring sau README)
+- [X] **NU trebuie antrenat** cu performanță bună (weights pot fi random)
 
 
 #### **Modul 3: Web Service / UI**
@@ -321,13 +189,13 @@ proiect-rn-[nume-prenume]/
 ## Checklist Final – Bifați Totul Înainte de Predare
 
 ### Documentație și Structură
-- [ ] Tabelul Nevoie → Soluție → Modul complet (minimum 2 rânduri cu exemple concrete completate in README_Etapa4_Arhitectura_SIA.md)
-- [ ] Declarație contribuție 40% date originale completată în README_Etapa4_Arhitectura_SIA.md
+- [X] Tabelul Nevoie → Soluție → Modul complet (minimum 2 rânduri cu exemple concrete completate in README_Etapa4_Arhitectura_SIA.md)
+- [X] Declarație contribuție 40% date originale completată în README_Etapa4_Arhitectura_SIA.md
 - [ ] Cod generare/achiziție date funcțional și documentat
-- [ ] Dovezi contribuție originală: grafice + log + statistici în `docs/`
-- [ ] Diagrama State Machine creată și salvată în `docs/state_machine.*`
-- [ ] Legendă State Machine scrisă în README_Etapa4_Arhitectura_SIA.md (minimum 1-2 paragrafe cu justificare)
-- [ ] Repository structurat conform modelului de mai sus (verificat consistență cu Etapa 3)
+- [X] Dovezi contribuție originală: grafice + log + statistici în `docs/`
+- [X] Diagrama State Machine creată și salvată în `docs/state_machine.*`
+- [X] Legendă State Machine scrisă în README_Etapa4_Arhitectura_SIA.md (minimum 1-2 paragrafe cu justificare)
+- [X] Repository structurat conform modelului de mai sus (verificat consistență cu Etapa 3)
 
 ### Modul 1: Data Logging / Acquisition
 - [ ] Cod rulează fără erori (`python src/data_acquisition/...` sau echivalent LabVIEW)
@@ -340,8 +208,8 @@ proiect-rn-[nume-prenume]/
 - [ ] Fișiere în `data/generated/` conform structurii
 
 ### Modul 2: Neural Network
-- [ ] Arhitectură RN definită și documentată în cod (docstring detaliat) - versiunea inițială 
-- [ ] README în `src/neural_network/` cu detalii arhitectură curentă
+- [X] Arhitectură RN definită și documentată în cod (docstring detaliat) - versiunea inițială 
+- [X] README în `src/neural_network/` cu detalii arhitectură curentă
 
 ### Modul 3: Web Service / UI
 - [ ] Propunere Interfață ce pornește fără erori (comanda de lansare testată)

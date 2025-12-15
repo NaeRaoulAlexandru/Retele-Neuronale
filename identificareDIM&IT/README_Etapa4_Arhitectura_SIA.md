@@ -78,8 +78,7 @@ Acestea au fost exportate in format YoloV8 unde fiecare fisier (train/valid/test
 ```
 ---
 
-### 3. Diagrama State Machine a Întregului Sistem (OBLIGATORIE)
-### Justificarea State Machine-ului ales:
+### 3. Legenda State Machine
 
 Am ales o arhitectura de tip "Human-in-the-loop CAPP" (Computer-Aided Process Planning asistat), pentru ca automatizarea totala a desenelor tehnice prezinta riscuri de eroare contextuala. Desi Reteaua Neuronala poate detecta cu precizie prezenta simbolurilor, ea nu poate deduce automat relatiile tehnologice dintre acestea (ex: ce rugozitate se aplica acestei cote?).
 
@@ -98,7 +97,6 @@ Am ales o arhitectura de tip "Human-in-the-loop CAPP" (Computer-Aided Process Pl
 - **[AI_INFERENCE] → [USER_GROUPING]:** Se întâmplă automat după finalizarea predicției, doar dacă **numărul de obiecte detectate > 0**.
 - **[AI_INFERENCE] → [ERROR/WARNING]:** Se întâmplă când modelul returnează 0 detecții (Confidence < Pragul stabilit), semnalând utilizatorului că imaginea poate fi neclară sau lipsită de simboluri cunoscute.
 - **[USER_GROUPING] → [GENERATE_PLAN]:** Se declanșează la apăsarea butonului "Generează Operație", validând că selecția conține cel puțin o entitate geometrică și o condiție tehnică.
-```
 
 ---
 

@@ -24,19 +24,23 @@ project-name/
 │   └── datasets/          # descriere seturi de date, surse, diagrame
 ├── data/
 │   ├── raw/               # am adaugat poze din diferite desene de executie cu informatii de pe desen
-|   |    ├── filete/
-|   |    ├── racordari/
-|   |    ├── tesituri/
 │   ├── processed/         # date curățate și transformate
 │   ├── train/             # set de instruire
+│   │   ├── images/
+│   │   └── labels/
 │   ├── validation/        # set de validare
-│   └── test/              # set de testare
+│   │   ├── images/
+│   │   └── labels/
+│   └── test/         # set de testare
+│       ├── images/
+│       └── labels/
 ├── src/
 │   ├── preprocessing/     # funcții pentru preprocesare
 │   ├── data_acquisition/  # generare / achiziție date (dacă există)
 │   └── neural_network/    # implementarea RN (în etapa următoare)
 ├── config/                # fișiere de configurare
-└── requirements.txt       # dependențe Python (dacă aplicabil)
+│   └── data.yaml          # fișier de configurare clase și căi
+└── requirements.txt       # ultralytics, shutil, os, glob
 ```
 
 ---
@@ -45,26 +49,27 @@ project-name/
 
 ### 2.1 Sursa datelor
 
-* **Origine:** [Dataset public de desene tehnice pentru diferite piese mecanice]
-* **Modul de achiziție:** Fisiere externe si generare programabila pentru inclinarea capturilor la anumite grade
+* **Origine:** [Dataset propriu constituit din fotografii și scanări ale desenelor tehnice industriale.]
+* **Modul de achiziție:**  Fisier extern (Roboflow) 
 * **Perioada / condițiile colectării:** [Noiembrie 2025 - Decembrie 2025]
 
 ### 2.2 Caracteristicile dataset-ului
 
-* **Număr total de observații:** 
-* **Număr de caracteristici (features):** 
-* **Tipuri de date:** Categoriale / Imagini
-* **Format fișiere:** PNG
+* **Număr total de observații: 140 (dupa augmentare), 41** 
+* **Număr de caracteristici (features):** 8 clase distincte (Ra, cota, filet, gauri, racordare, simbol_diam, tesitura, toleranta)
+* **Tipuri de date:** Imagini 
+* **Format fișiere:** JPG/PNG (Imagini) / ☑ TXT (Adnotări format YOLO)
 
 ### 2.3 Descrierea fiecărei caracteristici
 
 | **Caracteristică** | **Tip** | **Unitate** | **Descriere** | **Domeniu valori** |
 |-------------------|---------|-------------|---------------|--------------------|
-| pixeli | numeric | intensitate | valorile pixelilor | 0-255 |
-| cota | categorial | – | cotele sunt de diferite tipuri (1-gauri, 2-filete, 3-racordari, 4-tesituri, 5-lungimi, 6-diametre) | 1-6 |
-| ... | ... | ... | ... | ... |
+| Imagine | matrice pixeli | px | Imagine bruta redimensionata | 0-255 |
+| Rezolutie | dimensiune | px | Rezolutia de intrare in retea | 640 x 640 |
+| Bounding Box | numeric | coordonate | Pozitia obiectului | 0-1 |
+| Clasa | cateforial | intreg | indicele clasei detectate | 0-7 |
 
-**Fișier recomandat:**  `data/README.md`
+**Fișier recomandat:**  `data/dataset_rebalansat/data.yaml`
 
 ---
 
@@ -75,6 +80,7 @@ project-name/
 * **Medie, mediană, deviație standard**
 * **Min–max și quartile**
 * **Distribuții pe caracteristici** (histograme)
+  
 * **Identificarea outlierilor** (IQR / percentile)
 
 ### 3.2 Analiza calității datelor
@@ -84,10 +90,9 @@ project-name/
 * **Identificarea caracteristicilor redundante sau puternic corelate**
 
 ### 3.3 Probleme identificate
-
-* [exemplu] Feature X are 8% valori lipsă
-* [exemplu] Distribuția feature Y este puternic neuniformă
-* [exemplu] Variabilitate ridicată în clase (class imbalance)
+* Dezechilibru de clasă: Clasa filet are un număr critic de mic de exemple (< 5% din total instanțe), rezultând inițial într-un Recall de 0%.
+* Rezoluție insuficientă: La rezoluția standard de $640 \times 640$, detaliile fine ale hașurilor de filet se pierdeau, fiind confundate cu fundalul.
+* Split incorect inițial: Roboflow a generat un split disproporționat (133 Train vs 4 Valid), ceea ce a dus la instabilitate în antrenament.
 
 ---
 

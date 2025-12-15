@@ -69,7 +69,7 @@ project-name/
 | Bounding Box | numeric | coordonate | Pozitia obiectului | 0-1 |
 | Clasa | cateforial | intreg | indicele clasei detectate | 0-7 |
 
-**Fișier recomandat:**  `data/dataset_rebalansat/data.yaml`
+**Fișier recomandat:**  `data/data.yaml`
 
 ---
 

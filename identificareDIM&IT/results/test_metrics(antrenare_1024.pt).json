@@ -1,0 +1,7 @@
+{
+    "test_accuracy_map50": 0.9246,
+    "test_map50_95": 0.6557,
+    "test_f1_score": 0.8748,
+    "test_precision": 0.855,
+    "test_recall": 0.8954
+}

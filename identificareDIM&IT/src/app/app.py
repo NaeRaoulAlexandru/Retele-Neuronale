@@ -4,270 +4,345 @@ import cv2
 import numpy as np
 import pandas as pd
 import os
-import math
 import re
-import pytesseract #
-from PIL import Image
+import math
+import easyocr
+import procedee  # Modulul logic
 
-# --- CONFIGURARE TESSERACT (OBLIGATORIU PENTRU WINDOWS) ---
-# Dacă ești pe Windows, decomentează linia de mai jos și pune calea corectă:
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# ------------------------------------------------------------------------------
+# 1. CONFIGURARE & STATE
+# ------------------------------------------------------------------------------
+st.set_page_config(page_title="SIA - CAPP", layout="wide", page_icon="✅")
+st.title("⚡ SIA - Computer Aided Process Planning")
 
-# --- 1. CONFIGURARE PAGINĂ ---
-st.set_page_config(
-    page_title="SIA - Procesare Desen Tehnic (Tesseract)",
-    layout="wide",
-    page_icon="🛠️"
-)
-st.title("🛠️ SIA - Analiză Desen Tehnic & Generare Tehnologie")
-st.markdown("---")
+if 'last_upload' not in st.session_state:
+    st.session_state.last_upload = None
+if 'df_cote' not in st.session_state:
+    st.session_state.df_cote = pd.DataFrame()
+if 'annotated_result' not in st.session_state:
+    st.session_state.annotated_result = None
 
-# --- 2. RESURSE (DOAR MODELUL MACRO) ---
+# Setări distanțe (în pixeli)
+STRICT_LIMIT_TOL = 15   
+LOOSE_LIMIT_RUG = 40    
+
+# ------------------------------------------------------------------------------
+# 2. CALLBACK DE RESETARE
+# ------------------------------------------------------------------------------
+def reset_inference():
+    st.session_state.annotated_result = None
+    st.session_state.df_cote = pd.DataFrame()
+
+# ------------------------------------------------------------------------------
+# 3. RESURSE
+# ------------------------------------------------------------------------------
 @st.cache_resource
 def load_resources():
-    # Păstrăm doar modelul care găsește cutiile (Cote, Rugozități)
-    path_macro = "models/antrenare_1024.pt"
-    if not os.path.exists(path_macro):
-        st.error(f"❌ Lipsă model Macro! Nu găsesc: {path_macro}")
+    path_model = "models/antrenare_640.pt" 
+    if not os.path.exists(path_model):
+        st.error(f"❌ Lipsă model: {path_model}")
         st.stop()
-    
-    model_macro = YOLO(path_macro)
-    return model_macro
+    model = YOLO(path_model)
+    print("⏳ Loading OCR...")
+    reader = easyocr.Reader(['en'], gpu=False) 
+    return model, reader
 
 try:
-    model_macro = load_resources()
+    model_ai, reader_ocr = load_resources()
 except Exception as e:
-    st.error(f"Eroare critică la inițializare: {e}")
+    st.error(f"Eroare resurse: {e}")
     st.stop()
 
-# --- 3. FUNCȚII PROCESARE & TESSERACT OCR ---
+# ------------------------------------------------------------------------------
+# 4. FUNCȚII GEOMETRICE
+# ------------------------------------------------------------------------------
+def crop_box(img, box):
+    h, w = img.shape[:2]
+    x1, y1, x2, y2 = map(int, box)
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(w, x2), min(h, y2)
+    return img[y1:y2, x1:x2]
 
-def preprocess_for_tesseract(img_crop):
-    """
-    Tesseract are nevoie de imagini procesate agresiv:
-    1. Rotire (dacă e vertical).
-    2. Grayscale.
-    3. Upscaling (Mărire) - CRITIC pentru cote mici.
-    4. Thresholding (Alb-Negru).
-    """
-    if img_crop.size == 0: return img_crop
-    
-    h, w = img_crop.shape[:2]
-    # 1. Rotire dacă e text vertical
-    if h > w: 
-        img_crop = cv2.rotate(img_crop, cv2.ROTATE_90_CLOCKWISE)
-    
-    # 2. Convertire la Grayscale
-    gray = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY)
-    
-    # 3. Upscaling (Mărire rezoluție)
-    # Textul mic din desene e greu de citit. Îl mărim de 2x sau 3x.
-    scale_factor = 2
-    upscaled = cv2.resize(gray, None, fx=scale_factor, fy=scale_factor, interpolation=cv2.INTER_CUBIC)
-    
-    # 4. Thresholding (Binarizare)
-    # Folosim Otsu pentru a separa textul negru de fundal
-    thresh = cv2.threshold(upscaled, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    
-    # Optional: Denoising dacă imaginea e foarte murdară
-    # thresh = cv2.medianBlur(thresh, 3)
-    
-    return thresh
-
-def run_tesseract_ocr(img_processed, whitelist='0123456789.,Ra+-'):
-    """
-    Rulează Tesseract pe imaginea preprocesată.
-    whitelist: Caracterele permise (elimină zgomotul).
-    """
-    # Configurație Tesseract:
-    # --psm 7: Tratează imaginea ca o singură linie de text.
-    # -c tessedit_char_whitelist: Forțează recunoașterea doar a caracterelor specificate.
-    custom_config = f'--oem 3 --psm 7 -c tessedit_char_whitelist={whitelist}'
+def run_ocr(img_crop, mode='numeric'):
+    if img_crop.size == 0: return ""
+    gray = cv2.cvtColor(img_crop, cv2.COLOR_BGR2GRAY) if len(img_crop.shape)==3 else img_crop
+    scale = 3 
+    big = cv2.resize(gray, None, fx=scale, fy=scale, interpolation=cv2.INTER_CUBIC)
+    _, binary = cv2.threshold(big, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    clean = cv2.copyMakeBorder(binary, 15, 15, 15, 15, cv2.BORDER_CONSTANT, value=255)
     
     try:
-        text = pytesseract.image_to_string(img_processed, config=custom_config)
-        # Curățare caractere invizibile (newlines)
-        return text.strip()
-    except Exception as e:
-        return ""
+        res = reader_ocr.readtext(clean, detail=0)
+        text = " ".join(res)
+        
+        if mode == 'numeric':
+            text = text.replace(',', '.')
+            matches = re.findall(r"[-+]?\d*\.\d+|\d+", text)
+            if matches: return matches[0]
+            return ""
+        else:
+            return text.strip()
+    except: return ""
 
-def calculate_distance(box1, box2):
-    c1_x, c1_y = (box1[0] + box1[2]) / 2, (box1[1] + box1[3]) / 2
-    c2_x, c2_y = (box2[0] + box2[2]) / 2, (box2[1] + box2[3]) / 2
-    return math.sqrt((c1_x - c2_x)**2 + (c1_y - c2_y)**2)
+def get_edge_distance(box1, box2):
+    """Calculează distanța minimă dintre margini."""
+    x1a, y1a, x2a, y2a = box1
+    x1b, y1b, x2b, y2b = box2
 
-# --- 4. LOGICĂ CAPP ---
-def determine_process(rug_val, is_circular):
+    left = x2a < x1b
+    right = x1a > x2b
+    bottom = y2a < y1b
+    top = y1a > y2b
+    
+    if top and left:     return math.hypot(x1b-x2a, y2b-y1a)
+    elif left and bottom: return math.hypot(x1b-x2a, y1b-y2a)
+    elif bottom and right: return math.hypot(x2b-x1a, y1b-y2a)
+    elif right and top:    return math.hypot(x2b-x1a, y2b-y1a)
+    elif left:   return x1b - x2a
+    elif right:  return x1a - x2b
+    elif bottom: return y1b - y2a
+    elif top:    return y1a - y2b
+    else:        return 0 
+
+def check_alignment(box1, box2):
+    """Verifică dacă există suprapunere pe axe."""
+    x1a, y1a, x2a, y2a = box1
+    x1b, y1b, x2b, y2b = box2
+    overlap_x = max(0, min(x2a, x2b) - max(x1a, x1b))
+    overlap_y = max(0, min(y2a, y2b) - max(y1a, y1b))
+    return (overlap_x > 0) or (overlap_y > 0)
+
+def recalculate_row(row, tol_class):
     try:
-        # Caută numere float sau int în text
-        vals = re.findall(r"[-+]?\d*\.\d+|\d+", rug_val.replace(',', '.'))
-        ra = float(vals[0]) if vals else 12.5
-    except:
-        ra = 12.5 
+        if pd.isna(row["Cota (mm)"]) or str(row["Cota (mm)"]).strip() == "": return None, None, None
+        tip = str(row["Suprafață"])
+        c = float(row["Cota (mm)"])
+        r = float(row["Ra (µm)"]) if not pd.isna(row["Ra (µm)"]) else 3.2
+        t_raw = str(row["Toleranță"])
+        t = None if "Gen." in t_raw or t_raw == "nan" else t_raw.replace(f"Gen. {tol_class}", "")
+        return procedee.generate_technological_plan(tip, c, r, t, tol_class)
+    except: return 0, "Err", "N/A"
 
-    if ra <= 0.8: return "Rectificare (Grinding)"
-    elif ra <= 1.6: return "Strunjire Finisare" if is_circular else "Frezare Finisare"
-    elif ra <= 6.3: return "Strunjire Semifinisare" if is_circular else "Frezare Semifinisare"
-    else: return "Degroșare (Roughing)"
-
-# --- 5. INTERFAȚA UTILIZATOR ---
-
+# ------------------------------------------------------------------------------
+# 5. SIDEBAR
+# ------------------------------------------------------------------------------
 with st.sidebar:
-    st.header("🎛️ Parametri Generali")
+    st.header("⚙️ Parametri")
+    gen_rug = st.text_input("Ra General", value="3.2")
+    gen_tol_class = st.selectbox("Clasă ISO 2768", ['f', 'm', 'c', 'v'], index=1)
     
-    st.subheader("1. Valori Implicite")
-    gen_rug = st.text_input("Rugozitate Generală", value="Ra 3.2")
-    gen_tol = st.text_input("Toleranță Generală", value="ISO 2768-m")
-    
-    st.divider()
-    
-    st.subheader("2. Setări AI")
-    conf_macro = st.slider("Macro Confidence (Detectie)", 0.2, 1.0, 0.25, 0.05)
-    
-    st.info("ℹ️ OCR-ul este realizat acum cu **Tesseract**.")
-    st.info("ℹ️ Proximitatea de asociere este fixată la **50px**.")
+    with st.expander("Calibrare Robot"):
+        conf_thresh = st.slider("Sensibilitate AI", 0.2, 1.0, 0.25, 0.05, on_change=reset_inference)
+        st.info(f"Dist. Toleranță: {STRICT_LIMIT_TOL}px\nDist. Rugozitate: {LOOSE_LIMIT_RUG}px")
 
-# B. Zona Principală
-uploaded_file = st.file_uploader("1. Încarcă Desenul Tehnic (JPG/PNG)", type=['jpg', 'png', 'jpeg'])
+    if st.button("🔄 Resetare Totală", on_click=lambda: st.session_state.clear()):
+        st.rerun()
+
+# ------------------------------------------------------------------------------
+# 6. MAIN FLOW
+# ------------------------------------------------------------------------------
+uploaded_file = st.file_uploader("Încarcă Desenul", type=['jpg', 'png', 'jpeg'])
 
 if uploaded_file:
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
-    img_original = cv2.imdecode(file_bytes, 1)
-    h, w, _ = img_original.shape
+    curr_img = cv2.imdecode(file_bytes, 1)
+    
+    is_new = (st.session_state.last_upload != uploaded_file.file_id)
+    needs_run = (st.session_state.annotated_result is None)
+    
+    if is_new or needs_run:
+        st.session_state.last_upload = uploaded_file.file_id
+        
+        with st.spinner("⚡ Analizez desenul..."):
+            
+            # 1. Inferență YOLO
+            res = model_ai.predict(curr_img, imgsz=1024, conf=conf_thresh)[0]
+            boxes = []
+            if res.obb:
+                for box in res.obb:
+                    boxes.append({
+                        'box': [int(c) for c in box.xyxy[0].cpu().numpy()],
+                        'label': model_ai.names[int(box.cls[0])].lower()
+                    })
+            
+            final_img = curr_img.copy()
+            
+            # 2. SEPARARE CLASE (FIX BUG: 'ra' vs 'toleranta')
+            # Folosim egalitate strictă pentru 'ra' ca să nu prindă 'toleRAnta'
+            
+            dims = [b for b in boxes if 'cota' in b['label']]
+            dias = [b for b in boxes if 'simbol' in b['label']]
+            tols = [b for b in boxes if 'tol' in b['label']]
+            
+            # AICI ESTE FIX-UL: "==" în loc de "in" pentru Ra
+            rugs = [b for b in boxes if b['label'] == 'ra']     
+            
+            dims.sort(key=lambda x: x['box'][1]) 
+            list_cote = []
 
-    st.image(img_original, caption="Imagine Originală", channels="BGR", use_container_width=True)
+            # --- 3. DESENARE ELEMENTE DETECTATE (VISUAL DEBUG) ---
+            # Toleranțe -> ALBASTRU (BGR: 255,0,0)
+            for t in tols:
+                x1, y1, x2, y2 = t['box']
+                cv2.rectangle(final_img, (x1, y1), (x2, y2), (255, 0, 0), 2)
+            
+            # Rugozități -> ROȘU (BGR: 0,0,255)
+            for r in rugs:
+                x1, y1, x2, y2 = r['box']
+                cv2.rectangle(final_img, (x1, y1), (x2, y2), (0, 0, 255), 2)
+            
+            # Simboluri Diametru -> PORTOCALIU
+            for d in dias:
+                x1, y1, x2, y2 = d['box']
+                cv2.rectangle(final_img, (x1, y1), (x2, y2), (0, 140, 255), 2)
 
-    if st.button("🚀 Analizează Desenul", type="primary"):
-        with st.spinner("🔍 1. Detecție Obiecte (YOLO) ... 2. Citire Text (Tesseract) ... 3. Generare Tehnologie"):
-            
-            prox_thresh = 50  
-            
-            # 1. Inferență MACRO (Găsește cutiile mari)
-            results = model_macro.predict(img_original, imgsz=1024, conf=conf_macro)[0]
-            
-            dims = []       
-            dias = []       
-            tols = []       
-            rugs_spec = []  
-            
-            boxes = results.obb if results.obb is not None else results.boxes
-            
-            if boxes:
-                for box in boxes:
-                    cls_id = int(box.cls[0])
-                    label = results.names[cls_id].lower()
-                    coords = box.xyxy[0].cpu().numpy()
-                    item = {'box': coords, 'label': label}
-                    
-                    if any(x in label for x in ['cota', 'dim']): dims.append(item)
-                    elif any(x in label for x in ['dia', 'simbol']): dias.append(item)
-                    elif any(x in label for x in ['tol']): tols.append(item)
-                    elif any(x in label for x in ['rug', 'ra']): rugs_spec.append(item)
-            
-            # 2. Procesare Cote cu TESSERACT
-            final_data = []
-            img_result = img_original.copy()
-            prog_bar = st.progress(0)
-            
-            for i, dim in enumerate(dims):
-                prog_bar.progress((i + 1) / len(dims))
+            # --- 4. LOGICĂ DE ASOCIERE ---
+            for i, d in enumerate(dims):
+                dx1, dy1, dx2, dy2 = d['box']
+                w, h = abs(dx2-dx1), abs(dy2-dy1)
                 
-                dx1, dy1, dx2, dy2 = map(int, dim['box'])
+                # Auto-rotire OCR
+                crop_cota = crop_box(curr_img, d['box'])
+                is_vertical = h > w
+                if is_vertical:
+                    crop_cota = cv2.rotate(crop_cota, cv2.ROTATE_90_CLOCKWISE)
                 
-                # --- A. OCR Cota ---
-                # Adăugăm padding alb în jur pentru a ajuta Tesseract
-                pad = 5
-                crop_dim = img_original[max(0, dy1-pad):min(h, dy2+pad), max(0, dx1-pad):min(w, dx2+pad)]
+                val_str = run_ocr(crop_cota, 'numeric')
+                try: val_cota = float(val_str)
+                except: val_cota = 0.0
                 
-                # Preprocesare specifică Tesseract (Alb-negru, Upscale)
-                proc_dim = preprocess_for_tesseract(crop_dim)
+                cx, cy = (dx1+dx2)//2, (dy1+dy2)//2
+                tip = "Plană"
                 
-                # Rulare Tesseract (Whitelist doar cifre și punct)
-                val_cota = run_tesseract_ocr(proc_dim, whitelist='0123456789.,')
-                if not val_cota: val_cota = "N/A"
-                
-                # --- B. Geometrie (Diametru?) ---
-                is_circular = False
+                # A. DIAMETRU
                 for dia in dias:
-                    if calculate_distance(dim['box'], dia['box']) < prox_thresh:
-                        is_circular = True
-                        cx, cy = int((dia['box'][0]+dia['box'][2])/2), int((dia['box'][1]+dia['box'][3])/2)
-                        dcx, dcy = int((dx1+dx2)/2), int((dy1+dy2)/2)
-                        cv2.line(img_result, (cx, cy), (dcx, dcy), (0, 165, 255), 2)
+                    dist = get_edge_distance(d['box'], dia['box'])
+                    aligned = check_alignment(d['box'], dia['box'])
+                    if dist < 100 and aligned:
+                        tip = "Cilindrica"
+                        ox1, oy1, ox2, oy2 = dia['box']
+                        cv2.line(final_img, (cx, cy), ((ox1+ox2)//2, (oy1+oy2)//2), (0,140,255), 2)
                         break
                 
-                # --- C. Toleranță ---
-                toleranta_finala = gen_tol
-                for tol in tols:
-                    if calculate_distance(dim['box'], tol['box']) < prox_thresh:
-                        tx1, ty1, tx2, ty2 = map(int, tol['box'])
-                        crop_tol = img_original[max(0, ty1):min(h, ty2), max(0, tx1):min(w, tx2)]
+                # B. TOLERANȚĂ
+                tol_txt = None
+                for t in tols:
+                    dist = get_edge_distance(d['box'], t['box'])
+                    aligned = check_alignment(d['box'], t['box'])
+                    
+                    if dist <= STRICT_LIMIT_TOL and aligned:
+                        tx1, ty1, tx2, ty2 = t['box']
+                        th_tol, tw_tol = abs(ty2-ty1), abs(tx2-tx1)
+                        c_tol = crop_box(curr_img, t['box'])
                         
-                        proc_tol = preprocess_for_tesseract(crop_tol)
-                        res_tol = run_tesseract_ocr(proc_tol, whitelist='0123456789.+-kjsmfgH') # Whitelist extins pt toleranțe
+                        if is_vertical or th_tol > tw_tol:
+                            c_tol = cv2.rotate(c_tol, cv2.ROTATE_90_CLOCKWISE)
                         
-                        if res_tol:
-                            toleranta_finala = res_tol
-                            tcx, tcy = int((tx1+tx2)/2), int((ty1+ty2)/2)
-                            dcx, dcy = int((dx1+dx2)/2), int((dy1+dy2)/2)
-                            cv2.line(img_result, (tcx, tcy), (dcx, dcy), (255, 0, 0), 2)
+                        tol_txt = run_ocr(c_tol, 'tolerance')
+                        cv2.line(final_img, (cx, cy), ((tx1+tx2)//2, (ty1+ty2)//2), (255,0,0), 2)
+                        break
+                
+                # C. RUGOZITATE
+                rug_specific = None
+                for r in rugs:
+                    dist = get_edge_distance(d['box'], r['box'])
+                    
+                    if dist <= LOOSE_LIMIT_RUG:
+                        rx1, ry1, rx2, ry2 = r['box']
+                        c_rug = crop_box(curr_img, r['box'])
+                        if is_vertical:
+                             c_rug = cv2.rotate(c_rug, cv2.ROTATE_90_CLOCKWISE)
+                             
+                        val_rug_str = run_ocr(c_rug, 'numeric')
+                        if val_rug_str:
+                            try: rug_specific = float(val_rug_str)
+                            except: pass
+                        
+                        cv2.line(final_img, (cx, cy), ((rx1+rx2)//2, (ry1+ry2)//2), (0,0,255), 2)
                         break
 
-                # --- D. Rugozitate ---
-                rugozitate_finala = gen_rug
-                for rug in rugs_spec:
-                    if calculate_distance(dim['box'], rug['box']) < prox_thresh:
-                        rx1, ry1, rx2, ry2 = map(int, rug['box'])
-                        crop_rug = img_original[max(0, ry1):min(h, ry2), max(0, rx1):min(w, rx2)]
-                        
-                        proc_rug = preprocess_for_tesseract(crop_rug)
-                        res_rug = run_tesseract_ocr(proc_rug, whitelist='0123456789.Ra')
-                        
-                        if res_rug:
-                            rugozitate_finala = res_rug # Tesseract citește "Ra 3.2" direct dacă e clar
-                            rcx, rcy = int((rx1+rx2)/2), int((ry1+ry2)/2)
-                            dcx, dcy = int((dx1+dx2)/2), int((dy1+dy2)/2)
-                            cv2.line(img_result, (rcx, rcy), (dcx, dcy), (0, 0, 255), 2)
-                        break
-
-                procedeu = determine_process(rugozitate_finala, is_circular)
-
-                final_data.append({
+                # Calcul Final
+                ra_final = rug_specific if rug_specific is not None else float(gen_rug)
+                tol_final = tol_txt if tol_txt else gen_tol_class
+                
+                nr, op, it = procedee.generate_technological_plan(tip, val_cota, ra_final, tol_final, gen_tol_class)
+                
+                list_cote.append({
                     "ID": i+1,
-                    "Tip Geometrie": "Circulară (Ø)" if is_circular else "Liniară",
-                    "Valoare Nominală": val_cota,
-                    "Toleranță": toleranta_finala,
-                    "Rugozitate": rugozitate_finala,
-                    "Procedeu Sugerat": procedeu
+                    "Suprafață": tip,
+                    "Cota (mm)": val_cota,
+                    "Ra (µm)": ra_final,
+                    "Toleranță": tol_final,
+                    "IT Țintă": f"IT {it}",
+                    "Nr. Op.": nr,
+                    "Tehnologie": op
                 })
                 
-                cv2.rectangle(img_result, (dx1, dy1), (dx2, dy2), (0, 255, 0), 2)
-                cv2.putText(img_result, str(i+1), (dx1, dy1-5), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+                # Desenare Cota
+                cv2.rectangle(final_img, (dx1, dy1), (dx2, dy2), (0,200,0), 2)
+                lid = str(i+1)
+                (tw, th), _ = cv2.getTextSize(lid, cv2.FONT_HERSHEY_SIMPLEX, 0.8, 2)
+                cv2.rectangle(final_img, (dx1, dy1-th-4), (dx1+tw+4, dy1), (0,200,0), -1)
+                cv2.putText(final_img, lid, (dx1+2, dy1-2), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
 
-            prog_bar.empty()
+            st.session_state.annotated_result = final_img
+            st.session_state.df_cote = pd.DataFrame(list_cote)
 
-            # 3. Afișare
-            col1, col2 = st.columns([1, 1])
-            
-            with col1:
-                st.subheader("🖼️ Detecții Vizuale")
-                st.image(img_result, caption="Vizualizare Asocieri", channels="BGR", use_container_width=True)
+    # --- 5. AFIȘARE ---
+    if st.session_state.annotated_result is not None:
+        c1, c2 = st.columns([1, 1.5])
+        
+        with c1:
+            st.image(st.session_state.annotated_result, channels="BGR", use_container_width=True)
+            st.caption("Verde: Cote | Roșu: Ra | Albastru: Tol. | Portocaliu: Ø")
+        
+        with c2:
+            col_cfg = {
+                "ID": st.column_config.NumberColumn("ID", width="small", format="%d"),
+                "Suprafață": st.column_config.TextColumn("Supraf.", width="small"),
+                "Cota (mm)": st.column_config.NumberColumn("Cota", width="small", format="%d"),
+                "Ra (µm)": st.column_config.NumberColumn("Ra", width="small", format="%.1f"),
+                "Toleranță": st.column_config.TextColumn("Tol.", width="small"),
+                "IT Țintă": st.column_config.TextColumn("IT", width="small"),
+                "Nr. Op.": st.column_config.NumberColumn("#Op", width="small"),
+                "Tehnologie": st.column_config.TextColumn("Tehnologie", width="large"),
+            }
 
-            with col2:
-                st.subheader("📝 Tabel Tehnologic (Tesseract OCR)")
+            if not st.session_state.df_cote.empty:
+                edited = st.data_editor(
+                    st.session_state.df_cote,
+                    hide_index=True,
+                    use_container_width=True,
+                    height=600,
+                    num_rows="dynamic",
+                    key="editor",
+                    column_config=col_cfg
+                )
                 
-                if final_data:
-                    df = pd.DataFrame(final_data)
-                    edited_df = st.data_editor(
-                        df,
-                        use_container_width=True,
-                        num_rows="dynamic",
-                        key="tech_table"
-                    )
-                    
-                    st.divider()
-                    st.subheader("💾 Export")
-                    csv = edited_df.to_csv(index=False).encode('utf-8')
-                    st.download_button("Descarcă CSV", csv, "fisa_tehnologica.csv", "text/csv")
+                old = st.session_state.df_cote.reset_index(drop=True)
+                new = edited.reset_index(drop=True)
+                
+                has_changes = False
+                if len(old) != len(new):
+                    has_changes = True
                 else:
-                    st.warning("⚠️ Nu s-au detectat cote.")
+                    cols = ["Suprafață", "Cota (mm)", "Ra (µm)", "Toleranță"]
+                    try:
+                        if not new[cols].equals(old[cols]): has_changes = True
+                    except: has_changes = True
+
+                if has_changes:
+                    for idx, row in edited.iterrows():
+                        res = recalculate_row(row, gen_tol_class)
+                        if res[0] is not None:
+                            nr, op, it = res
+                            edited.at[idx, 'Nr. Op.'] = nr
+                            edited.at[idx, 'Tehnologie'] = op
+                            edited.at[idx, 'IT Țintă'] = f"IT {it}"
+                    st.session_state.df_cote = edited
+                    st.rerun()
+
+                csv = st.session_state.df_cote.to_csv(index=False)
+                st.download_button("💾 Export CSV", csv, "fisa.csv", type="primary")
+            else:
+                st.warning("Imagine procesată, dar nu s-au găsit cote.")

@@ -365,15 +365,15 @@ Salvați în `docs/results/`:
 ### Direcții viitoare de dezvoltare
 
 **Pe termen scurt (1-3 luni):**
-1. Colectare [300] date adiționale pentru clasa minoritară
-2. Implementare [tehnica Y] pentru îmbunătățire recall
-3. Optimizare latență prin [metoda Z]
+1. Colectare [300] date adiționale pentru clase minoritare.
+2. Antrenare pe imgsz mai mare.
+3. Adaugare clase (filete,tesituri,gauri).
 ...
 
 **Pe termen mediu (3-6 luni):**
-1. Integrare cu sistem SCADA din producție
-2. Deployment pe [platform edge - ex: Jetson, NPU]
-3. Implementare monitoring MLOps (drift detection)
+1. Antrenare OCR personal.
+2. Implementare logica de orientare a piesei pentru a considera doar cotele orizontale.
+3. Detectare axa de simetrie si coordonatele gaurilor, daca o gaura nu este centrata pe axa de simetrie, aceasta nu se poate realiza prin strunjire.
 ...
 
 ```
@@ -684,4 +684,5 @@ Exemplu:
 ---
 
 **REMINDER:** Aceasta a fost ultima versiune pentru feedback. Următoarea predare este **VERSIUNEA FINALĂ PENTRU EXAMEN**!
+
 

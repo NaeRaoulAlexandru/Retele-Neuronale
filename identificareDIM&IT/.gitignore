@@ -1,0 +1,44 @@
+# --- Python & Cache ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Mediu Virtual (Virtual Environment) ---
+# Este CRITIC să nu urci venv-ul, deoarece are mii de fișiere și e specific PC-ului tău
+venv/
+env/
+.env
+
+# --- YOLOv8 / Ultralytics (Foarte Important) ---
+# Folderul 'runs' este creat automat la fiecare antrenare și conține
+# gigabytes de checkpoint-uri, grafice și log-uri intermediare.
+runs/
+
+# Modelele YOLO de bază descărcate automat (ex: yolov8n.pt)
+yolov8n.pt
+yolov8s.pt
+yolov8*.pt
+
+# --- Modele Antrenate (Opțional) ---
+# GitHub nu acceptă fișiere mai mari de 100MB.
+# Dacă modelele tale din folderul 'models/' sunt mici (<100MB), le poți lăsa.
+# Dacă sunt mari, decomentează linia de mai jos:
+# models/*.pt
+# models/*.h5
+# models/*.onnx
+
+# --- Streamlit ---
+.streamlit/secrets.toml
+
+# --- IDE & Sistem de Operare ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Fișiere Generate de Aplicație ---
+# Fișierele create în timpul rulării care nu trebuie salvate în istoric
+fisa.csv
+temp/
+*.log

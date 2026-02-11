@@ -96,17 +96,15 @@ Documentați **minimum 4 experimente** cu variații sistematice:
 
 | **Exp#** | **Modificare față de Baseline (Etapa 5)** | **Accuracy** | **F1-score** | **Timp antrenare** | **Observații** |
 |----------|------------------------------------------|--------------|--------------|-------------------|----------------|
-| Baseline | YOLOv8 | - | - | - | Primul model folosit(Nu i-am salvat rezultatele, dar nu a fost foarte bun) |
-| Exp 1 | YoloV8-OBB(imgsz=640 → 1024) | →0.9246 | →0.8748 | 1.5 ore -> 4.3 ore | Detectie mai buna a detaliilor |
-| Exp 2 | Batch size 16 → 8 | →0.9246 | →0.8748 | 1.5 ore -> 4.3 ore | Antrenare mai buna |
-| Exp 3 | cls=0.5 → 4.0 | →0.9246 | →0.8748 | 1.5 ore -> 4.3 ore |  Am mărit drastic penalizarea pentru erorile de clasificare |
-| Exp 4 | cos_lr=False → | →0.9246 | →0.8748 | 1.5 ore -> 4.3 ore | Rata de invatare converge spre final |
-
+| Baseline | YOLOv8n-OBB | 0.9246 | 0.8748 | 4.3 ore | Model etapa 5 (imgsz=1024, batch=8,cls=4.0) |
+| Exp 1 | imgsz = 320 | 0.6992 | 0.6599 | +/- 1 ora | Rezultate proaste |
+| Exp 2 | YOLOv8s-OBB -imgsz=640  | 0.9461 | 0.9023 | 3.5 ore | Antrenare mai buna |
+| Exp 3 | lr=0.01 -> lr=0.001 | 0.9224 | 0.8715 | 3.7 ore |  Rezultate mai slabe fata de exp. anterior |
 
 **Justificare alegere configurație finală:**
 ```
-Am ales Exp 4 ca model final pentru că:
-1. Oferă cel mai bun F1-score (0.87), critic pentru aplicația noastră de Computed Aided Process Planning 
+Am ales Exp 2 ca model final pentru că:
+1. Oferă cel mai bun F1-score (0.90), critic pentru aplicația noastră de Computed Aided Process Planning 
 2. Testare pe date noi arată generalizare mai bună
 
 ```
@@ -126,54 +124,13 @@ Am ales Exp 4 ca model final pentru că:
 
 | **Componenta** | **Stare Etapa 5** | **Modificare Etapa 6** | **Justificare** |
 |----------------|-------------------|------------------------|-----------------|
-| **Model încărcat** | `antrenare_150e.pt` | `antrenare_1024.pt` | +9% accuracy, -5% FN |
-| **Threshold alertă (State Machine)** | 0.5 (default) | 0.35 (clasa 'defect') | Minimizare FN în context industrial |
+| **Model încărcat** | `antrenare_1024.pt` | `antrenare_640.pt` | Acuratete mai mare |
+| **Threshold alertă (State Machine)** | 0.5 (default) | - | Minimizare FN în context industrial |
 | **Stare nouă State Machine** | N/A | `CONFIDENCE_CHECK` | Filtrare predicții cu confidence <0.6 |
-| **Latență target** | 100ms | 50ms (ONNX export) | Cerință timp real producție |
-| **UI - afișare confidence** | Da/Nu simplu | Bară progres + valoare % | Feedback operator îmbunătățit |
-| **Logging** | Doar predicție | Predicție + confidence + timestamp | Audit trail complet |
-| **Web Service response** | JSON minimal | JSON extins + metadata | Integrare API extern |
-
-**Completați pentru proiectul vostru:**
-```markdown
-### Modificări concrete aduse în Etapa 6:
-
-1. **Model înlocuit:** `models/trained_model.h5` → `models/optimized_model.h5`
-   - Îmbunătățire: Accuracy +X%, F1 +Y%
-   - Motivație: [descrieți de ce modelul optimizat e mai bun pentru aplicația voastră]
-
-2. **State Machine actualizat:**
-   - Threshold modificat: [valoare veche] → [valoare nouă]
-   - Stare nouă adăugată: [nume stare] - [ce face]
-   - Tranziție modificată: [descrieți]
-
-3. **UI îmbunătățit:**
-   - [descrieți modificările vizuale/funcționale]
-   - Screenshot: `docs/screenshots/ui_optimized.png`
-
-4. **Pipeline end-to-end re-testat:**
-   - Test complet: input → preprocess → inference → decision → output
-   - Timp total: [X] ms (vs [Y] ms în Etapa 5)
-```
-
-### Diagrama State Machine Actualizată (dacă s-au făcut modificări)
-
-Dacă ați modificat State Machine-ul în Etapa 6, includeți diagrama actualizată în `docs/state_machine_v2.png` și explicați diferențele:
-
-```
-Exemplu modificări State Machine pentru Etapa 6:
-
-ÎNAINTE (Etapa 5):
-PREPROCESS → RN_INFERENCE → THRESHOLD_CHECK (0.5) → ALERT/NORMAL
-
-DUPĂ (Etapa 6):
-PREPROCESS → RN_INFERENCE → CONFIDENCE_FILTER (>0.6) → 
-  ├─ [High confidence] → THRESHOLD_CHECK (0.35) → ALERT/NORMAL
-  └─ [Low confidence] → REQUEST_HUMAN_REVIEW → LOG_UNCERTAIN
-
-Motivație: Predicțiile cu confidence <0.6 sunt trimise pentru review uman,
-           reducând riscul de decizii automate greșite în mediul industrial.
-```
+| **Latență target** | 100ms | 50ms | Cerință timp real producție |
+| **UI - afișare clasa** | Aceeasi culoare | Am aplicat culori diferite pentru fiecare | Feedback operator îmbunătățit |
+| **Logging** | Doar predicție | Predictie + calcul procese avansat  | Functionare mai precisa a programului |
+| **Web Service response** | JSON minimal | Optiunea de a modifica fisa tehnologica in timp real | Operatorul poate modifica valorile eronate din fisa |
 
 ---
 
@@ -189,12 +146,12 @@ Motivație: Predicțiile cu confidence <0.6 sunt trimise pentru review uman,
 ### Interpretare Confusion Matrix:
 
 **Clasa cu cea mai bună performanță:** [Cota]
-- Precision: [95]%
-- Recall: [89]%
+- Precision: [98]%
+- Recall: [90]%
 - Explicație: Multe exemple
 
 **Clasa cu cea mai slabă performanță:** [Rugozitate]
-- Precision: [83]%
+- Precision: [79]%
 - Recall: [85]%
 - Explicație: Cele mai putine exemple
 
@@ -209,13 +166,53 @@ Selectați și analizați **minimum 5 exemple greșite** de pe test set:
 | #1 | Toleranta | Cota | 0.65 | Suprapunere cu alte obiecte | Adaugarea mai multor date |
 | #2 | Rugozitate | Nimic | N/A | Contrast slab | Adaugarea mai multor date |
 | #3 | Cota | Nimic | N/A | Unele cote sunt mai inclinate fata de datele pentru antrenare | Colectare date pentru generalizare mai bune |
-| #4 | Rugozitate | Rugozitata | 0.70 | Box-ul nu este pus pe tot detaliul | Configurare parametru Box din lista YAML |
-| #5 | Toleranta | Toleranta | 0.5 | Detectie incompleta | Trebuie adaugate mai multe tolerante(ele se pot scrie in mai multe feluri) |
+| #4 | Rugozitate | Rugozitate | 0.70 | Box-ul nu este pus pe tot detaliul | Configurare parametru Box din lista YAML |
+| #5 | Toleranta | Toleranta | 0.6 | Detectie incompleta | Trebuie sa adaug mai multe tolerante(ele se pot scrie in mai multe feluri) |
 
 
 **Analiză detaliată per exemplu (scrieți pentru fiecare):**
 ```markdown
-### Exemplu #127 - Cotele nu sunt detectate mereu
+### Exemplu #1 - Confuzie între Toleranță și Cotă (False Positive)
+
+**Context:**
+Zona desenului este foarte aglomerată, unde liniile ajutătoare ale cotei se intersectează cu chenarul toleranței geometrice.
+
+**Input characteristics:**
+Densitate mare de linii negre pe fundal alb; suprapunere vizuală (**occlusion**) între obiecte.
+
+**Output RN:**
+Modelul a clasificat greșit o toleranță geometrică drept "Cota", cu o confidență medie (0.65).
+
+**Analiză:**
+Rețeaua nu a reușit să distingă trăsăturile specifice toleranței (simbolul intern) de liniile de cotă. Aceasta este o eroare de **clasificare** cauzată de faptul că trăsăturile vizuale (linii drepte, chenare) sunt foarte similare, iar modelul nu a învățat suficient contextul de separare.
+
+**Implicație industrială:**
+Interpretarea unei toleranțe ca o dimensiune poate duce la erori grave în fișa tehnologică, ignorând cerințele de precizie ale piesei.
+
+**Soluție:**
+Utilizarea augmentării de tip **Mosaic** (care combină 4 imagini) pentru a forța modelul să învețe obiecte în contexte aglomerate și parțial acoperite.
+
+### Exemplu #2 - Rugozitate Nedetectată (False Negative)
+
+**Context:**
+Desen vechi sau scanat la o calitate inferioară, cu contrast redus.
+
+**Input characteristics:**
+Simbolul de rugozitate are linii foarte subțiri și "șterse", confundându-se cu fundalul zgomotos al hârtiei.
+
+**Output RN:**
+Niciun bounding box generat (**Missed Detection**).
+
+**Analiză:**
+Modelul nu a putut extrage **trăsăturile de margine (edge features)** necesare pentru a identifica triunghiul specific rugozității. Pragul de detecție a eliminat propunerea de box din cauza scorului prea mic.
+
+**Implicație industrială:**
+Omiterea rugozității înseamnă că piesa ar putea fi produsă fără finisajul necesar suprafeței, rezultând un rebut funcțional.
+
+**Soluție:**
+Aplicarea algoritmilor de pre-procesare a imaginii, precum **CLAHE** (Contrast Limited Adaptive Histogram Equalization) înainte de inferență și antrenarea cu augmentări de tip "Noise" și "Blur".
+
+### Exemplu #3 - Cotele nu sunt detectate mereu
 
 **Context:** Inclinatia cotei influenteaza
 **Input characteristics:** -
@@ -228,7 +225,7 @@ Cota de pe desen este mai inclinata decat cele pentru care a fost antrenata rete
 Aceasta eroare poate duce la extragerea informatiilor de pe desen intr-un mod mai putin eficient.(Operatorul uman trebuie sa adauge si aceasta cota ratata manual)
 
 **Soluție:**
- Augmentare si colectarea a mai multor cote inclinate
+ Augmentare si colectarea a mai multor cote inclinate.
 ```
 
 ---
@@ -245,15 +242,15 @@ Descrieți strategia folosită pentru optimizare:
 **Abordare:** Manual
 
 **Axe de optimizare explorate:**
-1. **Arhitectură:** YOLOv8-OBB 
+1. **Arhitectură:** YOLOv8s-OBB 
 2. **Regularizare:** cls=4.0
 3. **Learning rate:** cos_lr
 4. **Augmentări:** Blur si rotiri
-5. **Batch size:** 8 pentru imgsz=1024
+5. **Batch size:** 16 pentru imgsz=640
 
 **Criteriu de selecție model final:** Maximizarea F1-score
 
-**Buget computațional:** 4.3 ore CPU pentru varianta finala
+**Buget computațional:** 3.5 ore CPU pentru varianta finala
 ```
 
 ### 3.2 Grafice Comparative
@@ -269,25 +266,25 @@ Generați și salvați în `docs/optimization/`:
 ### Raport Final Optimizare
 
 **Model baseline (Etapa 5):**
-- Accuracy: ~0.65
-- F1-score: ~0.60
-- Latență: ~15ms 
+- Accuracy: ~0.92
+- F1-score: ~0.87
+- Latență: ~100 
 
 **Model optimizat (Etapa 6 - Exp 4):**
-- Accuracy (mAP50): **0.9246** (+27%)
-- F1-score: **0.8748** (+27%)
-- Latență: ~45ms (creștere acceptabilă datorită rezoluției 1024px)
+- Accuracy (mAP50): **0.94** 
+- F1-score: **0.90** 
+- Latență: ~50ms 
 
 **Configurație finală aleasă:**
-- **Arhitectură:** YOLOv8n-OBB (Nano) sau YOLOv8s-OBB (Small) adaptat.
-- **Input Size:** 1024x1024 px.
+- **Arhitectură:** YOLOv8s-OBB (Small) adaptat.
+- **Input Size:** 640x640 px.
 - **Learning rate:** `lr0=0.01` cu `cos_lr=True` (Cosine Decay).
-- **Batch size:** 8 (pentru stabilitate la 1024px).
+- **Batch size:** 16 
 - **Regularizare:** `cls=4.0` (penalizare x4 pentru erori de clasificare).
-- **Epoci:** 150(best 118) (cu Early Stopping activat, răbdare 25 epoci).
+- **Epoci:** 145(best 118) (cu Early Stopping activat, răbdare 15 epoci).
 
 **Îmbunătățiri cheie:**
-1. **Rezoluție 1024px:** A permis detectarea simbolurilor de rugozitate care la 640px erau ilizibile (doar câțiva pixeli), crescând Recall-ul.
+1. **Arhitectura modelului de la Nano la Small**: Modelul este mai performant si are capacitatea de invatare mai buna
 2. **Class Weights (cls=4.0):** A redus numărul de False Negatives pentru clasa minoritară "Toleranță", forțând modelul să acorde atenție exemplelor rare.
 3. **Cosine LR:** A asigurat o scădere lină a ratei de învățare spre final, permițând modelului să se stabilizeze într-un minim global optim (evitând oscilațiile finale).
 ```
@@ -300,13 +297,12 @@ Generați și salvați în `docs/optimization/`:
 
 | **Metrică** | **Etapa 4** | **Etapa 5** | **Etapa 6** | **Target Industrial** | **Status** |
 |-------------|-------------|-------------|-------------|----------------------|------------|
-| Accuracy | ~20% | 72% | 81% | ≥85% | Aproape |
-| F1-score (macro) | ~0.15 | 0.68 | 0.77 | ≥0.80 | Aproape |
-| Precision (defect) | N/A | 0.75 | 0.83 | ≥0.85 | Aproape |
-| Recall (defect) | N/A | 0.70 | 0.88 | ≥0.90 | Aproape |
-| False Negative Rate | N/A | 12% | 5% | ≤3% | Aproape |
-| Latență inferență | 50ms | 48ms | 35ms | ≤50ms | OK |
-| Throughput | N/A | 20 inf/s | 28 inf/s | ≥25 inf/s | OK |
+| Accuracy | 91% | 92% | 94% | ≥85% | OK |
+| F1-score (macro) | 0.86 | 0.87 | 0.90 | ≥0.80 | OK |
+| Precision (defect) | 0.86 | 0.85 | 0.92 | ≥0.85 | OK |
+| Recall (defect) | 0.85 | 0.89 | 0.87 | ≥0.90 | Aproape |
+| Latență inferență | 50ms | 100ms | 50ms | ≤50ms | OK |
+
 
 ### 4.2 Vizualizări Obligatorii
 
@@ -392,6 +388,7 @@ Salvați în `docs/results/`:
 1. Rezoluția este factorul critic: În analiza documentelor tehnice, trecerea de la 640px la 1024px a avut un impact mai mare asupra Recall-ului decât orice modificare de arhitectură, făcând vizibile simbolurile de câțiva pixeli.
 2. OBB vs AABB: Pentru obiecte rotite și dense (cote, toleranțe), bounding box-urile orientate (OBB) sunt obligatorii; cutiile standard (AABB) introduc prea mult zgomot și suprapuneri.
 3. Early stopping esențial pentru evitare overfitting
+4. Schimbarea arhitecturii: Modelul Small este mai performant decat Nano, dar antrenarea la 1024x1024 de pixeli ar dura prea mult
 
 **Proces:**
 1. Calitatea datelor > Cantitatea datelor: Timpul investit în corectarea manuală a poligoanelor în Roboflow a adus beneficii mai mari decât augmentarea sintetică agresivă.
@@ -593,12 +590,12 @@ python src/neural_network/visualize.py --all
 
 ### Analiză Performanță
 - [X] Confusion matrix generată în `docs/confusion_matrix_optimized.png`
-- [ ] Analiză interpretare confusion matrix completată în README
+- [X] Analiză interpretare confusion matrix completată în README
 - [X] Minimum 5 exemple greșite analizate detaliat
 - [X] Implicații industriale documentate (cost FN vs FP)
 
 ### Actualizare Aplicație Software
-- [ ] Tabel modificări aplicație completat
+- [X] Tabel modificări aplicație completat
 - [X] UI încarcă modelul OPTIMIZAT (nu cel din Etapa 5)
 - [X] Screenshot `docs/screenshots/inference_optimized.png`
 - [X] Pipeline end-to-end re-testat și funcțional
@@ -611,9 +608,9 @@ python src/neural_network/visualize.py --all
 - [X] Plan post-feedback scris
 
 ### Verificări Tehnice
-- [ ] `requirements.txt` actualizat
-- [ ] Toate path-urile RELATIVE
-- [ ] Cod nou comentat (minimum 15%)
+- [X] `requirements.txt` actualizat
+- [X] Toate path-urile RELATIVE
+- [X] Cod nou comentat (minimum 15%)
 - [X] `git log` arată commit-uri incrementale
 - [X] Verificare anti-plagiat respectată
 
@@ -621,15 +618,15 @@ python src/neural_network/visualize.py --all
 - [X] README Etapa 3 actualizat (dacă s-au modificat date/preprocesare)
 - [X] README Etapa 4 actualizat (dacă s-a modificat arhitectura/State Machine)
 - [X] README Etapa 5 actualizat (dacă s-au modificat parametri antrenare)
-- [ ] `docs/state_machine.*` actualizat pentru a reflecta versiunea finală
+- [X] `docs/state_machine.*` actualizat pentru a reflecta versiunea finală
 - [X] Toate fișierele de configurare sincronizate cu modelul optimizat
 
 ### Pre-Predare
-- [ ] `etapa6_optimizare_concluzii.md` completat cu TOATE secțiunile
+- [X] `etapa6_optimizare_concluzii.md` completat cu TOATE secțiunile
 - [X] Structură repository conformă modelului de mai sus
-- [ ] Commit: `"Etapa 6 completă – Accuracy=X.XX, F1=X.XX (optimizat)"`
-- [ ] Tag: `git tag -a v0.6-optimized-final -m "Etapa 6 - Model optimizat + Concluzii"`
-- [ ] Push: `git push origin main --tags`
+- [X] Commit: `"Etapa 6 completă – Accuracy=X.XX, F1=X.XX (optimizat)"`
+- [X] Tag: `git tag -a v0.6-optimized-final -m "Etapa 6 - Model optimizat + Concluzii"`
+- [X] Push: `git push origin main --tags`
 - [X] Repository accesibil (public sau privat cu acces profesori)
 
 ---
@@ -687,3 +684,4 @@ Exemplu:
 ---
 
 **REMINDER:** Aceasta a fost ultima versiune pentru feedback. Următoarea predare este **VERSIUNEA FINALĂ PENTRU EXAMEN**!
+
